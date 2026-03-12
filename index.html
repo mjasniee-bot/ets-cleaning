@@ -154,7 +154,17 @@ const sheetURL="https://docs.google.com/spreadsheets/d/1kKb3MwSUXLsfu2mLKFcygGS2
 let rowsData=[];
 
 
-/* PARSE DATE */
+/* READ URL PARAMETER */
+
+const params = new URLSearchParams(window.location.search);
+
+const paramTrain = params.get("train");
+const paramDate = params.get("date");
+const paramType = params.get("type");
+const paramTime = params.get("time");
+
+
+/* DATE NORMALIZE */
 
 function parseSheetDate(dateStr){
 
@@ -182,38 +192,42 @@ return dateStr;
 }
 
 
-/* PARSE TIME */
+/* TIME NORMALIZE */
 
-function parseSheetTime(timeStr){
+function normalizeTime(t){
 
-if(!timeStr) return "";
+if(!t) return "";
 
-timeStr=String(timeStr);
+t = decodeURIComponent(String(t)).trim();
 
-if(timeStr.startsWith("Date(")){
+if(t.startsWith("Date(")){
 
-let parts=timeStr.replace("Date(","").replace(")","").split(",");
+let p = t.replace("Date(","").replace(")","").split(",");
 
-let h=Number(parts[3]);
-let m=Number(parts[4]);
+let h = Number(p[3]);
+let m = Number(p[4]);
 
 let ampm = h >= 12 ? "PM" : "AM";
 
 h = h % 12;
 h = h ? h : 12;
 
-m = String(m).padStart(2,"0");
-
-return `${h}:${m}:00 ${ampm}`;
+return `${h}:${String(m).padStart(2,"0")} ${ampm}`;
 
 }
 
-return timeStr;
+if(t.includes(":") && (t.includes("PM") || t.includes("AM"))){
+
+return t.replace(":00","");
+
+}
+
+return t;
 
 }
 
 
-/* EXTRACT DRIVE ID */
+/* EXTRACT DRIVE IMAGE ID */
 
 function extractDriveIDs(text){
 
@@ -278,7 +292,7 @@ let trains=[...new Set(rowsData.map(r=>r.c[7]?.v))]
 let types=[...new Set(rowsData.map(r=>r.c[5]?.v))]
 .filter(Boolean);
 
-let times=[...new Set(rowsData.map(r=>parseSheetTime(r.c[3]?.v)))]
+let times=[...new Set(rowsData.map(r=>normalizeTime(r.c[3]?.v)))]
 .filter(Boolean);
 
 trains.forEach(t=>{
@@ -312,12 +326,12 @@ function loadReport(){
 let train=trainSelect.value;
 let date=dateSelect.value;
 let type=typeSelect.value;
-let time=timeSelect.value;
+let time=normalizeTime(timeSelect.value);
 
 let row=rowsData.find(r=>{
 
 let sheetDate=parseSheetDate(r.c[2]?.v);
-let sheetTime=parseSheetTime(r.c[3]?.v);
+let sheetTime=normalizeTime(r.c[3]?.v);
 
 return r.c[7]?.v==train &&
 sheetDate==date &&
@@ -338,7 +352,7 @@ document.getElementById("report").style.display="block";
 document.getElementById("train").innerText=train;
 document.getElementById("date").innerText=date;
 document.getElementById("depot").innerText=row.c[6]?.v || "";
-document.getElementById("startTime").innerText=parseSheetTime(row.c[3]?.v);
+document.getElementById("startTime").innerText=normalizeTime(row.c[3]?.v);
 document.getElementById("supervisor").innerText=row.c[8]?.v || "";
 
 let typeBadge=document.getElementById("cleaningType");
@@ -369,6 +383,19 @@ let json=JSON.parse(data.substr(47).slice(0,-2));
 rowsData=json.table.rows;
 
 populateFilters();
+
+/* AUTO LOAD FROM LOOKER STUDIO */
+
+if(paramTrain && paramDate && paramType && paramTime){
+
+trainSelect.value=paramTrain;
+dateSelect.value=paramDate;
+typeSelect.value=decodeURIComponent(paramType);
+timeSelect.value=normalizeTime(paramTime);
+
+setTimeout(loadReport,500);
+
+}
 
 });
 
