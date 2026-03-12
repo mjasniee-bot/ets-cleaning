@@ -17,9 +17,13 @@ h1{
 margin-bottom:10px;
 }
 
-.info{
-color:#555;
-margin-bottom:20px;
+.section{
+margin-top:40px;
+}
+
+.section h2{
+margin-bottom:15px;
+color:#333;
 }
 
 .gallery{
@@ -32,13 +36,14 @@ gap:15px;
 width:100%;
 height:220px;
 object-fit:cover;
-border-radius:8px;
-box-shadow:0 3px 8px rgba(0,0,0,0.2);
+border-radius:10px;
+box-shadow:0 4px 10px rgba(0,0,0,0.2);
+cursor:pointer;
 }
 
-.loader{
-margin-top:20px;
-color:#888;
+.info{
+color:#555;
+margin-bottom:20px;
 }
 
 </style>
@@ -48,12 +53,27 @@ color:#888;
 <body>
 
 <h1>ETS Cleaning Inspection Gallery</h1>
-
 <div class="info" id="info"></div>
 
-<div class="gallery" id="gallery"></div>
 
-<div class="loader" id="loader">Loading images...</div>
+<div class="section">
+<h2>📷 Sebelum Cucian</h2>
+<div class="gallery" id="before"></div>
+</div>
+
+
+<div class="section">
+<h2>🧼 Semasa Cucian</h2>
+<div class="gallery" id="during"></div>
+</div>
+
+
+<div class="section">
+<h2>✨ Selepas Cucian</h2>
+<div class="gallery" id="after"></div>
+</div>
+
+
 
 <script>
 
@@ -64,12 +84,7 @@ const train=params.get("train");
 
 document.getElementById("info").innerHTML="Train Set: "+train;
 
-let imageQueue=[];
-let loading=false;
-let maxImages=40;
 
-
-/* EXTRACT ID DARI open?id= */
 
 function extractDriveIDs(text){
 
@@ -86,7 +101,6 @@ link=link.trim();
 if(link.includes("open?id=")){
 
 let id=link.split("open?id=")[1];
-
 ids.push(id);
 
 }
@@ -99,45 +113,23 @@ return ids;
 
 
 
-/* LOAD IMAGE QUEUE */
+function renderImages(ids,container){
 
-function processQueue(){
-
-if(loading) return;
-
-loading=true;
-
-let batch=imageQueue.splice(0,4);
-
-batch.forEach(id=>{
+ids.forEach(id=>{
 
 let img=document.createElement("img");
 
+img.src="https://lh3.googleusercontent.com/d/"+id+"=w1200";
+
 img.loading="lazy";
 
-img.src="https://lh3.googleusercontent.com/d/"+id+"=w1000";
-
-document.getElementById("gallery").appendChild(img);
+container.appendChild(img);
 
 });
 
-loading=false;
-
-if(imageQueue.length>0){
-
-setTimeout(processQueue,500);
-
-}else{
-
-document.getElementById("loader").style.display="none";
-
-}
-
 }
 
 
-
-/* LOAD GOOGLE SHEET */
 
 fetch(sheetURL)
 
@@ -155,37 +147,35 @@ let sheetTrain=r.c[7]?.v;
 
 if(sheetTrain==train){
 
-r.c.forEach(cell=>{
+let before = r.c[10]?.v;
+let during = r.c[11]?.v;
+let after = r.c[12]?.v;
 
-if(cell && cell.v){
 
-let text=String(cell.v);
+if(before){
 
-if(text.includes("drive.google.com")){
+let ids=extractDriveIDs(before);
+renderImages(ids,document.getElementById("before"));
 
-let ids=extractDriveIDs(text);
+}
 
-ids.forEach(id=>{
+if(during){
 
-if(imageQueue.length < maxImages){
+let ids=extractDriveIDs(during);
+renderImages(ids,document.getElementById("during"));
 
-imageQueue.push(id);
+}
+
+if(after){
+
+let ids=extractDriveIDs(after);
+renderImages(ids,document.getElementById("after"));
+
+}
 
 }
 
 });
-
-}
-
-}
-
-});
-
-}
-
-});
-
-processQueue();
 
 });
 
