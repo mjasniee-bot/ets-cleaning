@@ -30,7 +30,13 @@ padding:8px;
 margin-right:10px;
 }
 
+button{
+padding:10px 15px;
+cursor:pointer;
+}
+
 .report{
+display:none;
 background:white;
 padding:20px;
 border-radius:10px;
@@ -45,6 +51,7 @@ gap:10px;
 }
 
 .section{
+display:none;
 margin-top:40px;
 }
 
@@ -61,12 +68,6 @@ object-fit:cover;
 border-radius:10px;
 cursor:pointer;
 box-shadow:0 3px 10px rgba(0,0,0,0.2);
-}
-
-button{
-padding:10px 15px;
-margin-top:15px;
-cursor:pointer;
 }
 
 #viewer{
@@ -103,12 +104,14 @@ Train Set
 Tarikh
 <input type="date" id="dateSelect">
 
+<button onclick="loadReport()">Load Report</button>
+
 <button onclick="exportPDF()">Export PDF</button>
 
 </div>
 
 
-<div class="report">
+<div class="report" id="report">
 
 <div class="report-grid">
 
@@ -123,17 +126,17 @@ Tarikh
 </div>
 
 
-<div class="section">
+<div class="section" id="beforeSection">
 <h2>📷 Sebelum Cucian</h2>
 <div class="gallery" id="before"></div>
 </div>
 
-<div class="section">
+<div class="section" id="duringSection">
 <h2>🧼 Semasa Cucian</h2>
 <div class="gallery" id="during"></div>
 </div>
 
-<div class="section">
+<div class="section" id="afterSection">
 <h2>✨ Selepas Cucian</h2>
 <div class="gallery" id="after"></div>
 </div>
@@ -248,36 +251,6 @@ trainSelect.appendChild(opt);
 
 });
 
-trainSelect.onchange=updateDateFilter;
-
-updateDateFilter();
-
-}
-
-
-
-function updateDateFilter(){
-
-let train=document.getElementById("trainSelect").value;
-
-let dates=rowsData
-.filter(r=>r.c[7]?.v==train)
-.map(r=>r.c[2]?.v)
-.filter(Boolean)
-.sort((a,b)=>new Date(b)-new Date(a));
-
-let dateInput=document.getElementById("dateSelect");
-
-if(dates.length>0){
-
-dateInput.value=dates[0];
-
-}
-
-dateInput.onchange=loadReport;
-
-loadReport();
-
 }
 
 
@@ -289,7 +262,18 @@ let date=document.getElementById("dateSelect").value;
 
 let row=rowsData.find(r=>r.c[7]?.v==train && r.c[2]?.v==date);
 
-if(!row) return;
+if(!row){
+
+alert("Data tidak dijumpai");
+return;
+
+}
+
+document.getElementById("report").style.display="block";
+document.getElementById("beforeSection").style.display="block";
+document.getElementById("duringSection").style.display="block";
+document.getElementById("afterSection").style.display="block";
+
 
 document.getElementById("train").innerText=train;
 document.getElementById("date").innerText=formatDate(date);
