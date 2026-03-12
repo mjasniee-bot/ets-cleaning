@@ -253,14 +253,28 @@ trainSelect.appendChild(opt);
 
 }
 
+function normalizeDate(dateStr){
 
+let d=new Date(dateStr);
+
+let y=d.getFullYear();
+let m=String(d.getMonth()+1).padStart(2,"0");
+let day=String(d.getDate()).padStart(2,"0");
+
+return `${y}-${m}-${day}`;
+
+}
 
 function loadReport(){
 
 let train=document.getElementById("trainSelect").value;
 let date=document.getElementById("dateSelect").value;
 
-let row=rowsData.find(r=>r.c[7]?.v==train && r.c[2]?.v==date);
+let row=rowsData.find(r => {
+let sheetDate = normalizeDate(r.c[2]?.v);
+let selectedDate = normalizeDate(date);
+return r.c[7]?.v == train && sheetDate == selectedDate;
+});
 
 if(!row){
 
