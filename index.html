@@ -2,38 +2,29 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>ETS Cleaning Inspection</title>
+<title>ETS Cleaning Test</title>
 
 <style>
-body{
-font-family:Arial;
-background:#f4f6f9;
-padding:30px;
-}
+body{font-family:Arial;padding:30px;background:#f4f6f9;}
 
 .gallery{
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
 gap:15px;
-margin-top:20px;
 }
 
 .gallery img{
 width:100%;
 border-radius:8px;
 box-shadow:0 3px 8px rgba(0,0,0,0.2);
-cursor:pointer;
 }
-
 </style>
 
 </head>
 
 <body>
 
-<h1>ETS Cleaning Inspection Gallery</h1>
-
-<div id="info"></div>
+<h1>ETS Cleaning Test Gallery</h1>
 
 <div class="gallery" id="gallery"></div>
 
@@ -41,19 +32,10 @@ cursor:pointer;
 
 const sheetURL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSdIP_H3YMiK3wdj30CSjJbYKac1q2wqYtgZtPD4YMzuFk7B8kH8-JKpCClA-3dLhEXiRrgC1OeeAJ9/gviz/tq?tqx=out:json";
 
-const params=new URLSearchParams(window.location.search);
-
-const train=params.get("train");
-const date=params.get("date");
-
-document.getElementById("info").innerHTML=
-"Train Set: "+train+" | Date: "+date;
-
-function addImage(fileId){
+function addImage(id){
 
 let img=document.createElement("img");
-
-img.src="https://drive.google.com/uc?export=view&id="+fileId;
+img.src="https://drive.google.com/uc?export=view&id="+id;
 
 document.getElementById("gallery").appendChild(img);
 
@@ -68,13 +50,6 @@ let json=JSON.parse(data.substr(47).slice(0,-2));
 let rows=json.table.rows;
 
 rows.forEach(r=>{
-
-let sheetTrain=r.c[7]?.v;
-let sheetDate=r.c[2]?.f || r.c[2]?.v;
-
-console.log("TRAIN:",sheetTrain,"DATE:",sheetDate);
-
-if(sheetTrain==train){
 
 r.c.forEach(cell=>{
 
@@ -91,8 +66,6 @@ ids.forEach(id=>addImage(id));
 }
 
 });
-
-}
 
 });
 
