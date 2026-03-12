@@ -25,7 +25,7 @@ margin-bottom:20px;
 box-shadow:0 3px 8px rgba(0,0,0,0.1);
 }
 
-select{
+select,input{
 padding:8px;
 margin-right:10px;
 }
@@ -101,7 +101,7 @@ Train Set
 <select id="trainSelect"></select>
 
 Tarikh
-<select id="dateSelect"></select>
+<input type="date" id="dateSelect">
 
 <button onclick="exportPDF()">Export PDF</button>
 
@@ -149,6 +149,20 @@ Tarikh
 const sheetURL="https://docs.google.com/spreadsheets/d/1kKb3MwSUXLsfu2mLKFcygGS27wKMksAMASERRe4ebaE/gviz/tq?tqx=out:json&gid=1632722066";
 
 let rowsData=[];
+
+
+
+function formatDate(dateStr){
+
+let d=new Date(dateStr);
+
+let day=String(d.getDate()).padStart(2,"0");
+let month=String(d.getMonth()+1).padStart(2,"0");
+let year=d.getFullYear();
+
+return `${day}/${month}/${year}`;
+
+}
 
 
 
@@ -216,9 +230,11 @@ document.getElementById("viewer").style.display="none";
 
 
 
-function populateFilters(){
+function populateTrainFilter(){
 
-let trains=[...new Set(rowsData.map(r=>r.c[7]?.v))];
+let trains=[...new Set(rowsData.map(r=>r.c[7]?.v))]
+.filter(Boolean)
+.sort((a,b)=>a-b);
 
 let trainSelect=document.getElementById("trainSelect");
 
@@ -246,23 +262,19 @@ let train=document.getElementById("trainSelect").value;
 
 let dates=rowsData
 .filter(r=>r.c[7]?.v==train)
-.map(r=>r.c[2]?.v);
+.map(r=>r.c[2]?.v)
+.filter(Boolean)
+.sort((a,b)=>new Date(b)-new Date(a));
 
-let dateSelect=document.getElementById("dateSelect");
+let dateInput=document.getElementById("dateSelect");
 
-dateSelect.innerHTML="";
+if(dates.length>0){
 
-dates.forEach(d=>{
+dateInput.value=dates[0];
 
-let opt=document.createElement("option");
-opt.value=d;
-opt.text=d;
+}
 
-dateSelect.appendChild(opt);
-
-});
-
-dateSelect.onchange=loadReport;
+dateInput.onchange=loadReport;
 
 loadReport();
 
@@ -280,7 +292,7 @@ let row=rowsData.find(r=>r.c[7]?.v==train && r.c[2]?.v==date);
 if(!row) return;
 
 document.getElementById("train").innerText=train;
-document.getElementById("date").innerText=date;
+document.getElementById("date").innerText=formatDate(date);
 document.getElementById("depot").innerText=row.c[6]?.v || "";
 document.getElementById("supervisor").innerText=row.c[8]?.v || "";
 document.getElementById("crew").innerText=row.c[9]?.v || "";
@@ -320,7 +332,7 @@ let json=JSON.parse(data.substr(47).slice(0,-2));
 
 rowsData=json.table.rows;
 
-populateFilters();
+populateTrainFilter();
 
 });
 
