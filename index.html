@@ -95,7 +95,6 @@ max-height:90%;
 }
 
 </style>
-
 </head>
 
 <body>
@@ -155,17 +154,7 @@ const sheetURL="https://docs.google.com/spreadsheets/d/1kKb3MwSUXLsfu2mLKFcygGS2
 let rowsData=[];
 
 
-/* URL PARAMETER */
-
-const params = new URLSearchParams(window.location.search);
-
-const paramTrain = params.get("train");
-const paramDate = params.get("date");
-const paramType = params.get("type");
-const paramTime = params.get("time");
-
-
-/* DATE PARSER */
+/* PARSE DATE */
 
 function parseSheetDate(dateStr){
 
@@ -193,7 +182,7 @@ return dateStr;
 }
 
 
-/* TIME PARSER */
+/* PARSE TIME */
 
 function parseSheetTime(timeStr){
 
@@ -292,7 +281,6 @@ let types=[...new Set(rowsData.map(r=>r.c[5]?.v))]
 let times=[...new Set(rowsData.map(r=>parseSheetTime(r.c[3]?.v)))]
 .filter(Boolean);
 
-
 trains.forEach(t=>{
 let o=document.createElement("option");
 o.value=t;
@@ -338,7 +326,6 @@ sheetTime==time;
 
 });
 
-
 if(!row){
 
 alert("Data tidak dijumpai");
@@ -346,27 +333,23 @@ return;
 
 }
 
-report.style.display="block";
+document.getElementById("report").style.display="block";
 
-trainSpan.innerText=train;
-dateSpan.innerText=date;
-depotSpan.innerText=row.c[6]?.v || "";
-startTime.innerText=parseSheetTime(row.c[3]?.v);
-supervisor.innerText=row.c[8]?.v || "";
-
+document.getElementById("train").innerText=train;
+document.getElementById("date").innerText=date;
+document.getElementById("depot").innerText=row.c[6]?.v || "";
+document.getElementById("startTime").innerText=parseSheetTime(row.c[3]?.v);
+document.getElementById("supervisor").innerText=row.c[8]?.v || "";
 
 let typeBadge=document.getElementById("cleaningType");
-
 let typeText=row.c[5]?.v || "";
 
 typeBadge.innerText=typeText;
-
 typeBadge.className="badge";
 
 if(typeText.toLowerCase().includes("normal")) typeBadge.classList.add("normal");
 if(typeText.toLowerCase().includes("spot")) typeBadge.classList.add("spot");
 if(typeText.toLowerCase().includes("deep")) typeBadge.classList.add("deep");
-
 
 renderImages(extractDriveIDs(row.c[10]?.v || ""),before);
 renderImages(extractDriveIDs(row.c[11]?.v || ""),during);
@@ -387,22 +370,7 @@ rowsData=json.table.rows;
 
 populateFilters();
 
-
-/* AUTO LOAD FROM LOOKER STUDIO */
-
-if(paramTrain && paramDate && paramType && paramTime){
-
-trainSelect.value=paramTrain;
-dateSelect.value=paramDate;
-typeSelect.value=decodeURIComponent(paramType);
-timeSelect.value=decodeURIComponent(paramTime);
-
-loadReport();
-
-}
-
 });
-
 
 </script>
 
