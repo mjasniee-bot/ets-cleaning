@@ -13,11 +13,19 @@ background:#f4f6f9;
 padding:30px;
 }
 
+h1{
+margin-bottom:10px;
+}
+
+.info{
+color:#555;
+margin-bottom:20px;
+}
+
 .gallery{
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
 gap:15px;
-margin-top:20px;
 }
 
 .gallery img{
@@ -25,6 +33,11 @@ width:100%;
 border-radius:8px;
 box-shadow:0 3px 8px rgba(0,0,0,0.2);
 cursor:pointer;
+transition:0.3s;
+}
+
+.gallery img:hover{
+transform:scale(1.05);
 }
 
 .lightbox{
@@ -44,6 +57,11 @@ max-width:90%;
 max-height:90%;
 }
 
+.loader{
+margin-top:20px;
+color:#888;
+}
+
 </style>
 
 </head>
@@ -51,9 +69,12 @@ max-height:90%;
 <body>
 
 <h1>ETS Cleaning Inspection Gallery</h1>
-<div id="info"></div>
+
+<div class="info" id="info"></div>
 
 <div class="gallery" id="gallery"></div>
+
+<div class="loader" id="loader">Loading images...</div>
 
 <div class="lightbox" id="lightbox">
 <img id="lightbox-img">
@@ -69,13 +90,37 @@ const train=params.get("train");
 
 document.getElementById("info").innerHTML="Train Set: "+train;
 
-function addImage(id){
+let imageQueue=[];
+let loading=false;
+let maxImages=30;
+
+function processQueue(){
+
+if(loading) return;
+
+loading=true;
+
+let batch=imageQueue.splice(0,5);
+
+batch.forEach(id=>{
 
 let img=document.createElement("img");
 
-/*img.src="https://drive.google.com/uc?export=view&id="+id;*/
-img.src="https://drive.google.com/thumbnail?id="+id+"&sz=w1000";
+img.loading="lazy";
+
+img.src="https://drive.google.com/thumbnail?id="+id+"&sz=w800";
+
 document.getElementById("gallery").appendChild(img);
+
+});
+
+loading=false;
+
+if(imageQueue.length>0){
+setTimeout(processQueue,400);
+}else{
+document.getElementById("loader").style.display="none";
+}
 
 }
 
@@ -105,7 +150,13 @@ let ids=text.match(/[-\w]{25,}/g);
 
 if(ids){
 
-ids.forEach(id=>addImage(id));
+ids.forEach(id=>{
+
+if(imageQueue.length<maxImages){
+imageQueue.push(id);
+}
+
+});
 
 }
 
@@ -119,8 +170,9 @@ ids.forEach(id=>addImage(id));
 
 });
 
-});
+processQueue();
 
+});
 
 const lightbox=document.getElementById("lightbox");
 const lightboxImg=document.getElementById("lightbox-img");
@@ -137,7 +189,9 @@ lightboxImg.src=e.target.src;
 });
 
 lightbox.onclick=function(){
+
 lightbox.style.display="none";
+
 };
 
 </script>
