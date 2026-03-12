@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>ETS Cleaning Inspection</title>
+<title>ETS Cleaning Inspection Gallery</title>
 
 <style>
 
@@ -24,7 +24,7 @@ margin-bottom:20px;
 
 .gallery{
 display:grid;
-grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
 gap:15px;
 }
 
@@ -60,13 +60,33 @@ color:#888;
 const sheetURL="https://docs.google.com/spreadsheets/d/1kKb3MwSUXLsfu2mLKFcygGS27wKMksAMASERRe4ebaE/gviz/tq?tqx=out:json&gid=1632722066";
 
 const params=new URLSearchParams(window.location.search);
+
 const train=params.get("train");
 
 document.getElementById("info").innerHTML="Train Set: "+train;
 
 let imageQueue=[];
 let loading=false;
+
 let maxImages=40;
+
+
+
+function extractDriveIDs(text){
+
+let ids=[];
+
+let match1=text.match(/id=([a-zA-Z0-9_-]+)/);
+if(match1) ids.push(match1[1]);
+
+let match2=text.match(/\/d\/([a-zA-Z0-9_-]+)/);
+if(match2) ids.push(match2[1]);
+
+return ids;
+
+}
+
+
 
 function processQueue(){
 
@@ -89,24 +109,36 @@ document.getElementById("gallery").appendChild(frame);
 loading=false;
 
 if(imageQueue.length>0){
+
 setTimeout(processQueue,500);
+
 }else{
+
 document.getElementById("loader").style.display="none";
+
 }
 
 }
+
+
 
 fetch(sheetURL)
+
 .then(res=>res.text())
+
 .then(data=>{
 
 let json=JSON.parse(data.substr(47).slice(0,-2));
 
 let rows=json.table.rows;
 
+
+
 rows.forEach(r=>{
 
 let sheetTrain=r.c[7]?.v;
+
+
 
 if(sheetTrain==train){
 
@@ -116,33 +148,41 @@ if(cell && cell.v){
 
 let text=String(cell.v);
 
+
+
 if(text.includes("drive.google.com")){
 
-let ids=text.match(/[-\w]{25,}/g);
+let ids=extractDriveIDs(text);
 
-if(ids){
+
 
 ids.forEach(id=>{
 
 if(imageQueue.length < maxImages){
+
 imageQueue.push(id);
+
+}
+
+});
+
+
+
+}
+
 }
 
 });
 
 }
 
-}
-
-}
-
 });
 
-}
 
-});
 
 processQueue();
+
+
 
 });
 
