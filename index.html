@@ -13,6 +13,10 @@ background:#f4f6f9;
 padding:30px;
 }
 
+h1{
+margin-bottom:20px;
+}
+
 .filters{
 background:white;
 padding:15px;
@@ -22,15 +26,29 @@ box-shadow:0 3px 8px rgba(0,0,0,0.1);
 }
 
 select,input{
-padding:6px;
+padding:8px;
 margin-right:10px;
 }
 
+button{
+padding:9px 15px;
+cursor:pointer;
+}
+
 .report{
+display:none;
 background:white;
 padding:20px;
 border-radius:10px;
+box-shadow:0 3px 10px rgba(0,0,0,0.1);
 margin-bottom:30px;
+}
+
+.report-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:15px;
+margin-bottom:10px;
 }
 
 .gallery{
@@ -43,16 +61,43 @@ gap:15px;
 width:100%;
 height:220px;
 object-fit:cover;
-border-radius:8px;
+border-radius:10px;
+cursor:pointer;
+box-shadow:0 3px 10px rgba(0,0,0,0.2);
 }
 
-.debug{
-background:#111;
-color:#0f0;
-padding:15px;
-font-family:monospace;
-white-space:pre;
-margin-top:20px;
+.badge{
+padding:5px 10px;
+border-radius:6px;
+color:white;
+font-weight:bold;
+font-size:13px;
+}
+
+.badge.normal{background:#3498db;}
+.badge.spot{background:#f39c12;}
+.badge.deep{background:#e74c3c;}
+
+#viewer{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.9);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+#viewer img{
+max-width:90%;
+max-height:90%;
+}
+
+.print-btn{
+float:right;
+margin-top:-5px;
 }
 
 </style>
@@ -60,11 +105,11 @@ margin-top:20px;
 
 <body>
 
-<h1>ETS Cleaning Inspection Dashboard (DEBUG)</h1>
+<h1>ETS Cleaning Inspection Dashboard</h1>
 
 <div class="filters">
 
-Train
+Train Set
 <select id="trainSelect"></select>
 
 Tarikh
@@ -78,18 +123,26 @@ Masa
 
 <button onclick="loadReport()">Load Report</button>
 
+<button class="print-btn" onclick="window.print()">Print PDF</button>
+
 </div>
+
 
 <div class="report" id="report">
 
-<p><b>Train:</b> <span id="train"></span></p>
-<p><b>Tarikh:</b> <span id="date"></span></p>
-<p><b>Depoh:</b> <span id="depot"></span></p>
-<p><b>Jenis:</b> <span id="cleaningType"></span></p>
-<p><b>Masa:</b> <span id="startTime"></span></p>
-<p><b>Penyelia:</b> <span id="supervisor"></span></p>
+<div class="report-grid">
+
+<div><b>Train Set:</b> <span id="trainSpan"></span></div>
+<div><b>Tarikh:</b> <span id="dateSpan"></span></div>
+<div><b>Depoh / Stesen:</b> <span id="depotSpan"></span></div>
+<div><b>Jenis:</b> <span id="cleaningType" class="badge"></span></div>
+<div><b>Masa Mula:</b> <span id="startTime"></span></div>
+<div><b>Penyelia:</b> <span id="supervisor"></span></div>
 
 </div>
+
+</div>
+
 
 <h2>Sebelum Cucian</h2>
 <div class="gallery" id="before"></div>
@@ -100,7 +153,11 @@ Masa
 <h2>Selepas Cucian</h2>
 <div class="gallery" id="after"></div>
 
-<div class="debug" id="debug"></div>
+
+<div id="viewer" onclick="this.style.display='none'">
+<img id="viewerImg">
+</div>
+
 
 <script>
 
@@ -109,7 +166,7 @@ const sheetURL="https://docs.google.com/spreadsheets/d/1kKb3MwSUXLsfu2mLKFcygGS2
 let rowsData=[];
 
 
-/* READ URL PARAMETER */
+/* URL PARAMETER */
 
 const params=new URLSearchParams(window.location.search);
 
@@ -117,6 +174,7 @@ const paramTrain=params.get("train");
 const paramDate=params.get("date");
 const paramType=params.get("type");
 const paramTime=params.get("time");
+
 
 
 function parseSheetDate(d){
@@ -142,13 +200,12 @@ return d;
 }
 
 
+
 function normalizeTime(t){
 
 if(!t) return "";
 
-t = decodeURIComponent(String(t)).trim();
-
-/* GOOGLE SHEET Date(1899...) */
+t=decodeURIComponent(String(t)).trim();
 
 if(t.startsWith("Date(")){
 
@@ -161,10 +218,7 @@ return h+":"+m;
 
 }
 
-
-/* 12:45:00 PM */
-
-if(t.includes("AM") || t.includes("PM")){
+if(t.includes("AM")||t.includes("PM")){
 
 let parts=t.split(" ");
 
@@ -180,17 +234,11 @@ return h+":"+m;
 
 }
 
-
-/* 12:45:00 */
-
 if(t.includes(":")){
 
 let hm=t.split(":");
 
-let h=parseInt(hm[0]);
-let m=parseInt(hm[1]);
-
-return h+":"+m;
+return parseInt(hm[0])+":"+parseInt(hm[1]);
 
 }
 
@@ -199,19 +247,24 @@ return t;
 }
 
 
+
 function extractDriveIDs(text){
 
 let ids=[];
 
 text=decodeURIComponent(text);
 
-text.split(",").forEach(link=>{
+let links=text.split(",");
+
+links.forEach(link=>{
 
 link=link.trim();
 
 if(link.includes("open?id=")){
 
-ids.push(link.split("open?id=")[1]);
+let id=link.split("open?id=")[1];
+
+ids.push(id);
 
 }
 
@@ -220,6 +273,7 @@ ids.push(link.split("open?id=")[1]);
 return ids;
 
 }
+
 
 
 function renderImages(ids,container){
@@ -232,6 +286,14 @@ let img=document.createElement("img");
 
 img.src="https://lh3.googleusercontent.com/d/"+id+"=w1200";
 
+img.onclick=function(){
+
+document.getElementById("viewerImg").src=this.src;
+
+document.getElementById("viewer").style.display="flex";
+
+}
+
 container.appendChild(img);
 
 });
@@ -239,111 +301,129 @@ container.appendChild(img);
 }
 
 
+
 function populateFilters(){
 
-let trains=[...new Set(rowsData.map(r=>r.c[7]?.v))].filter(Boolean);
+let trainSet=[...new Set(rowsData.map(r=>r.c[7]?.v))].filter(Boolean).sort((a,b)=>a-b);
 
-trains.sort((a,b)=>a-b);
+let typeSet=[...new Set(rowsData.map(r=>r.c[5]?.v))].filter(Boolean);
 
-trains.forEach(t=>{
+let timeSet=[...new Set(rowsData.map(r=>normalizeTime(r.c[3]?.v)))].filter(Boolean);
+
+
+trainSet.forEach(t=>{
+
 let o=document.createElement("option");
+
 o.value=t;
+
 o.text=t;
+
 trainSelect.appendChild(o);
+
 });
 
 
-let types=[...new Set(rowsData.map(r=>r.c[5]?.v))].filter(Boolean);
+typeSet.forEach(t=>{
 
-types.forEach(t=>{
 let o=document.createElement("option");
+
 o.value=t;
+
 o.text=t;
+
 typeSelect.appendChild(o);
+
 });
 
 
-let times=[...new Set(rowsData.map(r=>normalizeTime(r.c[3]?.v)))].filter(Boolean);
+timeSet.forEach(t=>{
 
-times.forEach(t=>{
 let o=document.createElement("option");
+
 o.value=t;
+
 o.text=t;
+
 timeSelect.appendChild(o);
+
 });
 
 }
+
 
 
 function loadReport(){
 
 let train=trainSelect.value;
+
 let date=dateSelect.value;
+
 let type=typeSelect.value;
+
 let time=normalizeTime(timeSelect.value);
 
-let debugText="";
 
 let row=rowsData.find(r=>{
 
-let sheetTrain=r.c[7]?.v;
 let sheetDate=parseSheetDate(r.c[2]?.v);
-let sheetType=r.c[5]?.v;
+
 let sheetTime=normalizeTime(r.c[3]?.v);
 
-debugText+=`
-ROW:
-Train=${sheetTrain}
-Date=${sheetDate}
-Type=${sheetType}
-Time=${sheetTime}
-
-`;
-
-return sheetTrain==train &&
+return r.c[7]?.v==train &&
 sheetDate==date &&
-sheetType==type &&
+r.c[5]?.v==type &&
 sheetTime==time;
 
 });
 
 
-debug.innerText=`
-URL PARAMETER
-Train=${paramTrain}
-Date=${paramDate}
-Type=${paramType}
-Time=${paramTime}
-
-SELECTED
-Train=${train}
-Date=${date}
-Type=${type}
-Time=${time}
-
-${debugText}
-`;
-
-
 if(!row){
 
 alert("Data tidak dijumpai");
+
 return;
 
 }
 
-train.innerText=row.c[7]?.v;
-date.innerText=parseSheetDate(row.c[2]?.v);
-depot.innerText=row.c[6]?.v;
-cleaningType.innerText=row.c[5]?.v;
-startTime.innerText=normalizeTime(row.c[3]?.v);
-supervisor.innerText=row.c[8]?.v;
 
-renderImages(extractDriveIDs(row.c[10]?.v||""),before);
-renderImages(extractDriveIDs(row.c[11]?.v||""),during);
-renderImages(extractDriveIDs(row.c[12]?.v||""),after);
+report.style.display="block";
+
+
+trainSpan.innerText=train;
+
+dateSpan.innerText=date;
+
+depotSpan.innerText=row.c[6]?.v || "";
+
+startTime.innerText=row.c[3]?.v || "";
+
+supervisor.innerText=row.c[8]?.v || "";
+
+
+let typeBadge=document.getElementById("cleaningType");
+
+let typeText=row.c[5]?.v || "";
+
+typeBadge.innerText=typeText;
+
+typeBadge.className="badge";
+
+if(typeText.toLowerCase().includes("normal")) typeBadge.classList.add("normal");
+
+if(typeText.toLowerCase().includes("spot")) typeBadge.classList.add("spot");
+
+if(typeText.toLowerCase().includes("deep")) typeBadge.classList.add("deep");
+
+
+renderImages(extractDriveIDs(row.c[10]?.v || ""),before);
+
+renderImages(extractDriveIDs(row.c[11]?.v || ""),during);
+
+renderImages(extractDriveIDs(row.c[12]?.v || ""),after);
 
 }
+
 
 
 fetch(sheetURL)
@@ -356,14 +436,20 @@ rowsData=json.table.rows;
 
 populateFilters();
 
-/* AUTO FILL PARAMETER */
+
+/* AUTO LOAD FROM LOOKER STUDIO */
 
 if(paramTrain){
 
 trainSelect.value=paramTrain;
+
 dateSelect.value=paramDate;
+
 typeSelect.value=decodeURIComponent(paramType);
+
 timeSelect.value=normalizeTime(paramTime);
+
+loadReport();
 
 }
 
