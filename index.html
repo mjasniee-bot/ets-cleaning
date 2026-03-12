@@ -95,6 +95,7 @@ max-height:90%;
 }
 
 </style>
+
 </head>
 
 <body>
@@ -143,11 +144,9 @@ Masa Mula
 <h2>Selepas Cucian</h2>
 <div class="gallery" id="after"></div>
 
-
 <div id="viewer" onclick="this.style.display='none'">
 <img id="viewerImg">
 </div>
-
 
 <script>
 
@@ -156,6 +155,17 @@ const sheetURL="https://docs.google.com/spreadsheets/d/1kKb3MwSUXLsfu2mLKFcygGS2
 let rowsData=[];
 
 
+/* URL PARAMETER */
+
+const params = new URLSearchParams(window.location.search);
+
+const paramTrain = params.get("train");
+const paramDate = params.get("date");
+const paramType = params.get("type");
+const paramTime = params.get("time");
+
+
+/* DATE PARSER */
 
 function parseSheetDate(dateStr){
 
@@ -183,6 +193,38 @@ return dateStr;
 }
 
 
+/* TIME PARSER */
+
+function parseSheetTime(timeStr){
+
+if(!timeStr) return "";
+
+timeStr=String(timeStr);
+
+if(timeStr.startsWith("Date(")){
+
+let parts=timeStr.replace("Date(","").replace(")","").split(",");
+
+let h=Number(parts[3]);
+let m=Number(parts[4]);
+
+let ampm = h >= 12 ? "PM" : "AM";
+
+h = h % 12;
+h = h ? h : 12;
+
+m = String(m).padStart(2,"0");
+
+return `${h}:${m}:00 ${ampm}`;
+
+}
+
+return timeStr;
+
+}
+
+
+/* EXTRACT DRIVE ID */
 
 function extractDriveIDs(text){
 
@@ -210,6 +252,7 @@ return ids;
 }
 
 
+/* RENDER IMAGES */
 
 function renderImages(ids,container){
 
@@ -235,33 +278,36 @@ container.appendChild(img);
 }
 
 
+/* POPULATE FILTER */
 
 function populateFilters(){
 
-let trainSet=[...new Set(rowsData.map(r=>r.c[7]?.v))].filter(Boolean).sort((a,b)=>a-b);
+let trains=[...new Set(rowsData.map(r=>r.c[7]?.v))]
+.filter(Boolean)
+.sort((a,b)=>a-b);
 
-let typeSet=[...new Set(rowsData.map(r=>r.c[5]?.v))].filter(Boolean);
+let types=[...new Set(rowsData.map(r=>r.c[5]?.v))]
+.filter(Boolean);
 
-let timeSet=[...new Set(rowsData.map(r=>r.c[3]?.v))].filter(Boolean);
+let times=[...new Set(rowsData.map(r=>parseSheetTime(r.c[3]?.v)))]
+.filter(Boolean);
 
 
-trainSet.forEach(t=>{
+trains.forEach(t=>{
 let o=document.createElement("option");
 o.value=t;
 o.text=t;
 trainSelect.appendChild(o);
 });
 
-
-typeSet.forEach(t=>{
+types.forEach(t=>{
 let o=document.createElement("option");
 o.value=t;
 o.text=t;
 typeSelect.appendChild(o);
 });
 
-
-timeSet.forEach(t=>{
+times.forEach(t=>{
 let o=document.createElement("option");
 o.value=t;
 o.text=t;
@@ -271,6 +317,7 @@ timeSelect.appendChild(o);
 }
 
 
+/* LOAD REPORT */
 
 function loadReport(){
 
@@ -279,15 +326,15 @@ let date=dateSelect.value;
 let type=typeSelect.value;
 let time=timeSelect.value;
 
-
 let row=rowsData.find(r=>{
 
 let sheetDate=parseSheetDate(r.c[2]?.v);
+let sheetTime=parseSheetTime(r.c[3]?.v);
 
 return r.c[7]?.v==train &&
 sheetDate==date &&
 r.c[5]?.v==type &&
-r.c[3]?.v==time;
+sheetTime==time;
 
 });
 
@@ -299,14 +346,12 @@ return;
 
 }
 
-
 report.style.display="block";
-
 
 trainSpan.innerText=train;
 dateSpan.innerText=date;
 depotSpan.innerText=row.c[6]?.v || "";
-startTime.innerText=row.c[3]?.v || "";
+startTime.innerText=parseSheetTime(row.c[3]?.v);
 supervisor.innerText=row.c[8]?.v || "";
 
 
@@ -330,6 +375,7 @@ renderImages(extractDriveIDs(row.c[12]?.v || ""),after);
 }
 
 
+/* LOAD GOOGLE SHEET */
 
 fetch(sheetURL)
 .then(res=>res.text())
@@ -340,6 +386,20 @@ let json=JSON.parse(data.substr(47).slice(0,-2));
 rowsData=json.table.rows;
 
 populateFilters();
+
+
+/* AUTO LOAD FROM LOOKER STUDIO */
+
+if(paramTrain && paramDate && paramType && paramTime){
+
+trainSelect.value=paramTrain;
+dateSelect.value=paramDate;
+typeSelect.value=decodeURIComponent(paramType);
+timeSelect.value=decodeURIComponent(paramTime);
+
+loadReport();
+
+}
 
 });
 
