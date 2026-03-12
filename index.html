@@ -161,25 +161,37 @@ function normalizeTime(t){
 
 if(!t) return "";
 
-t=decodeURIComponent(String(t)).trim();
+t = decodeURIComponent(String(t)).trim();
 
 if(t.startsWith("Date(")){
 
-let p=t.replace("Date(","").replace(")","").split(",");
+let p = t.replace("Date(","").replace(")","").split(",");
 
-let h=Number(p[3]);
-let m=Number(p[4]);
+let h = Number(p[3]);
+let m = Number(p[4]);
 
-let ampm=h>=12?"PM":"AM";
-
-h=h%12;
-h=h?h:12;
-
-return `${h}:${String(m).padStart(2,"0")} ${ampm}`;
+return `${h}:${m}`;
 
 }
 
-return t.replace(":00","");
+/* convert 1:55:00 AM */
+if(t.includes("AM") || t.includes("PM")){
+
+let parts = t.split(" ");
+
+let hm = parts[0].split(":");
+
+let h = Number(hm[0]);
+let m = Number(hm[1]);
+
+if(parts[1]=="PM" && h<12) h+=12;
+if(parts[1]=="AM" && h==12) h=0;
+
+return `${h}:${m}`;
+
+}
+
+return t;
 
 }
 
@@ -259,7 +271,7 @@ let row=rowsData.find(r=>{
 return r.c[7]?.v==train &&
 parseSheetDate(r.c[2]?.v)==date &&
 r.c[5]?.v==type &&
-normalizeTime(r.c[3]?.v)==time;
+normalizeTime(r.c[3]?.v)==normalizeTime(time)
 
 });
 
