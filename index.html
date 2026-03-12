@@ -155,6 +155,8 @@ let rowsData=[];
 
 
 
+/* FORMAT DATE DISPLAY */
+
 function formatDate(dateStr){
 
 let d=new Date(dateStr);
@@ -168,6 +170,40 @@ return `${day}/${month}/${year}`;
 }
 
 
+
+/* PARSE DATE FROM GOOGLE SHEET */
+
+function parseSheetDate(dateStr){
+
+if(!dateStr) return "";
+
+dateStr=String(dateStr);
+
+if(dateStr.startsWith("Date(")){
+
+let parts=dateStr
+.replace("Date(","")
+.replace(")","")
+.split(",");
+
+let y=Number(parts[0]);
+let m=Number(parts[1])+1;
+let d=Number(parts[2]);
+
+m=String(m).padStart(2,"0");
+d=String(d).padStart(2,"0");
+
+return `${y}-${m}-${d}`;
+
+}
+
+return dateStr;
+
+}
+
+
+
+/* EXTRACT IMAGE IDS */
 
 function extractDriveIDs(text){
 
@@ -196,6 +232,8 @@ return ids;
 
 
 
+/* RENDER IMAGES */
+
 function renderImages(ids,container){
 
 container.innerHTML="";
@@ -218,6 +256,8 @@ container.appendChild(img);
 
 
 
+/* IMAGE VIEWER */
+
 function openViewer(src){
 
 document.getElementById("viewerImg").src=src;
@@ -231,40 +271,9 @@ document.getElementById("viewer").style.display="none";
 
 }
 
-function normalizeDate(dateStr){
 
-if(!dateStr) return "";
 
-dateStr = String(dateStr);
-
-/* format Date(2024,1,27) */
-
-if(dateStr.startsWith("Date(")){
-
-let parts=dateStr
-.replace("Date(","")
-.replace(")","")
-.split(",");
-
-let y=parts[0];
-let m=String(Number(parts[1])+1).padStart(2,"0");
-let d=String(parts[2]).padStart(2,"0");
-
-return `${y}-${m}-${d}`;
-
-}
-
-/* fallback normal date */
-
-let d=new Date(dateStr);
-
-let y=d.getFullYear();
-let m=String(d.getMonth()+1).padStart(2,"0");
-let day=String(d.getDate()).padStart(2,"0");
-
-return `${y}-${m}-${day}`;
-
-}
+/* TRAIN FILTER */
 
 function populateTrainFilter(){
 
@@ -288,17 +297,18 @@ trainSelect.appendChild(opt);
 
 
 
+/* LOAD REPORT */
+
 function loadReport(){
 
 let train=document.getElementById("trainSelect").value;
 let date=document.getElementById("dateSelect").value;
 
-let row=rowsData.find(r => {
+let row=rowsData.find(r=>{
 
-let sheetDate = normalizeDate(r.c[2]?.v);
-let selectedDate = normalizeDate(date);
+let sheetDate=parseSheetDate(r.c[2]?.v);
 
-return r.c[7]?.v == train && sheetDate == selectedDate;
+return r.c[7]?.v==train && sheetDate==date;
 
 });
 
@@ -347,6 +357,8 @@ window.print();
 }
 
 
+
+/* LOAD GOOGLE SHEET */
 
 fetch(sheetURL)
 .then(res=>res.text())
