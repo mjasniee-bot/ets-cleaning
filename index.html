@@ -118,6 +118,7 @@ Tarikh
 <div><b>Train Set:</b> <span id="train"></span></div>
 <div><b>Tarikh Cucian:</b> <span id="date"></span></div>
 <div><b>Depoh:</b> <span id="depot"></span></div>
+<div><b>Jenis Pembersihan:</b> <span id="cleaningType"></span></div>
 <div><b>Penyelia:</b> <span id="supervisor"></span></div>
 <div><b>Kru:</b> <span id="crew"></span></div>
 
@@ -321,6 +322,7 @@ document.getElementById("afterSection").style.display="block";
 document.getElementById("train").innerText=train;
 document.getElementById("date").innerText=formatDate(date);
 document.getElementById("depot").innerText=row.c[6]?.v || "";
+document.getElementById("cleaningType").innerText=row.c[5]?.v || "";
 document.getElementById("supervisor").innerText=row.c[8]?.v || "";
 document.getElementById("crew").innerText=row.c[9]?.v || "";
 
