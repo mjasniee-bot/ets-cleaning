@@ -13,10 +13,6 @@ background:#f4f6f9;
 padding:30px;
 }
 
-h1{
-margin-bottom:20px;
-}
-
 .filters{
 background:white;
 padding:15px;
@@ -26,21 +22,14 @@ box-shadow:0 3px 8px rgba(0,0,0,0.1);
 }
 
 select,input{
-padding:8px;
+padding:6px;
 margin-right:10px;
 }
 
-button{
-padding:10px 15px;
-cursor:pointer;
-}
-
 .report{
-display:none;
 background:white;
 padding:20px;
 border-radius:10px;
-box-shadow:0 3px 10px rgba(0,0,0,0.1);
 margin-bottom:30px;
 }
 
@@ -54,32 +43,28 @@ gap:15px;
 width:100%;
 height:220px;
 object-fit:cover;
-border-radius:10px;
-box-shadow:0 3px 10px rgba(0,0,0,0.2);
+border-radius:8px;
 }
 
-.badge{
-padding:5px 10px;
-border-radius:6px;
-color:white;
-font-weight:bold;
-font-size:13px;
+.debug{
+background:#111;
+color:#0f0;
+padding:15px;
+font-family:monospace;
+white-space:pre;
+margin-top:20px;
 }
-
-.badge.normal{background:#3498db;}
-.badge.spot{background:#f39c12;}
-.badge.deep{background:#e74c3c;}
 
 </style>
 </head>
 
 <body>
 
-<h1>ETS Cleaning Inspection Dashboard</h1>
+<h1>ETS Cleaning Inspection Dashboard (DEBUG)</h1>
 
-<div class="filters" id="filters">
+<div class="filters">
 
-Train Set
+Train
 <select id="trainSelect"></select>
 
 Tarikh
@@ -95,20 +80,16 @@ Masa
 
 </div>
 
-
 <div class="report" id="report">
-
-<h2>Maklumat Cucian</h2>
 
 <p><b>Train:</b> <span id="train"></span></p>
 <p><b>Tarikh:</b> <span id="date"></span></p>
 <p><b>Depoh:</b> <span id="depot"></span></p>
-<p><b>Jenis:</b> <span id="cleaningType" class="badge"></span></p>
+<p><b>Jenis:</b> <span id="cleaningType"></span></p>
 <p><b>Masa:</b> <span id="startTime"></span></p>
 <p><b>Penyelia:</b> <span id="supervisor"></span></p>
 
 </div>
-
 
 <h2>Sebelum Cucian</h2>
 <div class="gallery" id="before"></div>
@@ -119,6 +100,7 @@ Masa
 <h2>Selepas Cucian</h2>
 <div class="gallery" id="after"></div>
 
+<div class="debug" id="debug"></div>
 
 <script>
 
@@ -126,12 +108,15 @@ const sheetURL="https://docs.google.com/spreadsheets/d/1kKb3MwSUXLsfu2mLKFcygGS2
 
 let rowsData=[];
 
-const params = new URLSearchParams(window.location.search);
 
-const paramTrain = params.get("train");
-const paramDate = params.get("date");
-const paramType = params.get("type");
-const paramTime = params.get("time");
+/* READ URL PARAMETER */
+
+const params=new URLSearchParams(window.location.search);
+
+const paramTrain=params.get("train");
+const paramDate=params.get("date");
+const paramType=params.get("type");
+const paramTime=params.get("time");
 
 
 function parseSheetDate(d){
@@ -161,28 +146,29 @@ function normalizeTime(t){
 
 if(!t) return "";
 
-t = decodeURIComponent(String(t)).trim();
+t=decodeURIComponent(String(t)).trim();
 
 if(t.startsWith("Date(")){
 
-let p = t.replace("Date(","").replace(")","").split(",");
+let p=t.replace("Date(","").replace(")","").split(",");
 
-let h = Number(p[3]);
-let m = Number(p[4]);
+let h=Number(p[3]);
+let m=Number(p[4]);
 
 return `${h}:${m}`;
 
 }
 
-/* convert 1:55:00 AM */
-if(t.includes("AM") || t.includes("PM")){
+/* convert AM/PM */
 
-let parts = t.split(" ");
+if(t.includes("AM")||t.includes("PM")){
 
-let hm = parts[0].split(":");
+let parts=t.split(" ");
 
-let h = Number(hm[0]);
-let m = Number(hm[1]);
+let hm=parts[0].split(":");
+
+let h=Number(hm[0]);
+let m=Number(hm[1]);
 
 if(parts[1]=="PM" && h<12) h+=12;
 if(parts[1]=="AM" && h==12) h=0;
@@ -227,8 +213,6 @@ ids.forEach(id=>{
 
 let img=document.createElement("img");
 
-img.loading="lazy";
-
 img.src="https://lh3.googleusercontent.com/d/"+id+"=w1200";
 
 container.appendChild(img);
@@ -238,22 +222,37 @@ container.appendChild(img);
 }
 
 
-/* CASCADING FILTER */
+function populateFilters(){
 
-function updateFilters(){
+let trains=[...new Set(rowsData.map(r=>r.c[7]?.v))].filter(Boolean);
 
-let train=trainSelect.value;
+trains.sort((a,b)=>a-b);
 
-let rows=rowsData.filter(r=>r.c[7]?.v==train);
-
-let dates=[...new Set(rows.map(r=>parseSheetDate(r.c[2]?.v)))];
-
-dateSelect.innerHTML="";
-dates.forEach(d=>{
+trains.forEach(t=>{
 let o=document.createElement("option");
-o.value=d;
-o.text=d;
-dateSelect.appendChild(o);
+o.value=t;
+o.text=t;
+trainSelect.appendChild(o);
+});
+
+
+let types=[...new Set(rowsData.map(r=>r.c[5]?.v))].filter(Boolean);
+
+types.forEach(t=>{
+let o=document.createElement("option");
+o.value=t;
+o.text=t;
+typeSelect.appendChild(o);
+});
+
+
+let times=[...new Set(rowsData.map(r=>normalizeTime(r.c[3]?.v)))].filter(Boolean);
+
+times.forEach(t=>{
+let o=document.createElement("option");
+o.value=t;
+o.text=t;
+timeSelect.appendChild(o);
 });
 
 }
@@ -266,14 +265,48 @@ let date=dateSelect.value;
 let type=typeSelect.value;
 let time=normalizeTime(timeSelect.value);
 
+let debugText="";
+
 let row=rowsData.find(r=>{
 
-return r.c[7]?.v==train &&
-parseSheetDate(r.c[2]?.v)==date &&
-r.c[5]?.v==type &&
-normalizeTime(r.c[3]?.v)==normalizeTime(time)
+let sheetTrain=r.c[7]?.v;
+let sheetDate=parseSheetDate(r.c[2]?.v);
+let sheetType=r.c[5]?.v;
+let sheetTime=normalizeTime(r.c[3]?.v);
+
+debugText+=`
+ROW:
+Train=${sheetTrain}
+Date=${sheetDate}
+Type=${sheetType}
+Time=${sheetTime}
+
+`;
+
+return sheetTrain==train &&
+sheetDate==date &&
+sheetType==type &&
+sheetTime==time;
 
 });
+
+
+debug.innerText=`
+URL PARAMETER
+Train=${paramTrain}
+Date=${paramDate}
+Type=${paramType}
+Time=${paramTime}
+
+SELECTED
+Train=${train}
+Date=${date}
+Type=${type}
+Time=${time}
+
+${debugText}
+`;
+
 
 if(!row){
 
@@ -282,18 +315,12 @@ return;
 
 }
 
-document.getElementById("report").style.display="block";
-
-document.getElementById("train").innerText=train;
-document.getElementById("date").innerText=date;
-document.getElementById("depot").innerText=row.c[6]?.v;
-document.getElementById("startTime").innerText=normalizeTime(row.c[3]?.v);
-document.getElementById("supervisor").innerText=row.c[8]?.v;
-
-let typeBadge=document.getElementById("cleaningType");
-
-typeBadge.innerText=row.c[5]?.v;
-typeBadge.className="badge";
+train.innerText=row.c[7]?.v;
+date.innerText=parseSheetDate(row.c[2]?.v);
+depot.innerText=row.c[6]?.v;
+cleaningType.innerText=row.c[5]?.v;
+startTime.innerText=normalizeTime(row.c[3]?.v);
+supervisor.innerText=row.c[8]?.v;
 
 renderImages(extractDriveIDs(row.c[10]?.v||""),before);
 renderImages(extractDriveIDs(row.c[11]?.v||""),during);
@@ -310,21 +337,9 @@ let json=JSON.parse(data.substr(47).slice(0,-2));
 
 rowsData=json.table.rows;
 
-/* populate train */
+populateFilters();
 
-let trains=[...new Set(rowsData.map(r=>r.c[7]?.v))];
-
-trains.sort((a,b)=>a-b);
-
-trains.forEach(t=>{
-let o=document.createElement("option");
-o.value=t;
-o.text=t;
-trainSelect.appendChild(o);
-});
-
-
-/* auto load from lookerstudio */
+/* AUTO FILL PARAMETER */
 
 if(paramTrain){
 
@@ -332,10 +347,6 @@ trainSelect.value=paramTrain;
 dateSelect.value=paramDate;
 typeSelect.value=decodeURIComponent(paramType);
 timeSelect.value=normalizeTime(paramTime);
-
-document.getElementById("filters").style.display="none";
-
-setTimeout(loadReport,500);
 
 }
 
