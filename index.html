@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>ETS Cleaning Inspection Gallery</title>
+<title>ETS Cleaning Inspection Report</title>
 
 <style>
 
@@ -17,13 +17,26 @@ h1{
 margin-bottom:10px;
 }
 
+.report{
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0 3px 10px rgba(0,0,0,0.1);
+margin-bottom:30px;
+}
+
+.report-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:10px;
+}
+
 .section{
 margin-top:40px;
 }
 
 .section h2{
 margin-bottom:15px;
-color:#333;
 }
 
 .gallery{
@@ -37,13 +50,31 @@ width:100%;
 height:220px;
 object-fit:cover;
 border-radius:10px;
-box-shadow:0 4px 10px rgba(0,0,0,0.2);
 cursor:pointer;
+box-shadow:0 3px 10px rgba(0,0,0,0.2);
+transition:0.3s;
 }
 
-.info{
-color:#555;
-margin-bottom:20px;
+.gallery img:hover{
+transform:scale(1.03);
+}
+
+#viewer{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.9);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:999;
+}
+
+#viewer img{
+max-width:90%;
+max-height:90%;
 }
 
 </style>
@@ -52,8 +83,19 @@ margin-bottom:20px;
 
 <body>
 
-<h1>ETS Cleaning Inspection Gallery</h1>
-<div class="info" id="info"></div>
+<h1>ETS Cleaning Inspection Report</h1>
+
+<div class="report">
+<div class="report-grid">
+
+<div><b>Train Set:</b> <span id="train"></span></div>
+<div><b>Tarikh Cucian:</b> <span id="date"></span></div>
+<div><b>Depoh:</b> <span id="depot"></span></div>
+<div><b>Penyelia:</b> <span id="supervisor"></span></div>
+<div><b>Kru:</b> <span id="crew"></span></div>
+
+</div>
+</div>
 
 
 <div class="section">
@@ -74,6 +116,11 @@ margin-bottom:20px;
 </div>
 
 
+<div id="viewer" onclick="closeViewer()">
+<img id="viewerImg">
+</div>
+
+
 
 <script>
 
@@ -82,7 +129,7 @@ const sheetURL="https://docs.google.com/spreadsheets/d/1kKb3MwSUXLsfu2mLKFcygGS2
 const params=new URLSearchParams(window.location.search);
 const train=params.get("train");
 
-document.getElementById("info").innerHTML="Train Set: "+train;
+document.getElementById("train").innerText=train;
 
 
 
@@ -121,11 +168,28 @@ let img=document.createElement("img");
 
 img.src="https://lh3.googleusercontent.com/d/"+id+"=w1200";
 
-img.loading="lazy";
+img.onclick=function(){
+openViewer(this.src);
+}
 
 container.appendChild(img);
 
 });
+
+}
+
+
+
+function openViewer(src){
+
+document.getElementById("viewerImg").src=src;
+document.getElementById("viewer").style.display="flex";
+
+}
+
+function closeViewer(){
+
+document.getElementById("viewer").style.display="none";
 
 }
 
@@ -146,6 +210,12 @@ rows.forEach(r=>{
 let sheetTrain=r.c[7]?.v;
 
 if(sheetTrain==train){
+
+document.getElementById("date").innerText=r.c[2]?.v || "";
+document.getElementById("depot").innerText=r.c[6]?.v || "";
+document.getElementById("supervisor").innerText=r.c[8]?.v || "";
+document.getElementById("crew").innerText=r.c[9]?.v || "";
+
 
 let before = r.c[10]?.v;
 let during = r.c[11]?.v;
