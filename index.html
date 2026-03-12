@@ -70,24 +70,6 @@ let maxImages=40;
 
 
 
-function extractID(url){
-
-let id=null;
-
-if(url.includes("open?id=")){
-id=url.split("open?id=")[1];
-}
-
-if(url.includes("/file/d/")){
-id=url.split("/file/d/")[1].split("/")[0];
-}
-
-return id;
-
-}
-
-
-
 function processQueue(){
 
 if(loading) return;
@@ -123,7 +105,9 @@ document.getElementById("loader").style.display="none";
 
 
 fetch(sheetURL)
+
 .then(res=>res.text())
+
 .then(data=>{
 
 let json=JSON.parse(data.substr(47).slice(0,-2));
@@ -150,27 +134,25 @@ let text=String(cell.v);
 
 if(text.includes("drive.google.com")){
 
-/* split multiple links */
+/* ambil semua FILEID dari text */
 
-let links=text.split(",");
-
-
-
-links.forEach(link=>{
-
-link=link.trim();
-
-let id=extractID(link);
+let ids=text.match(/[-\w]{25,}/g);
 
 
 
-if(id && imageQueue.length<maxImages){
+if(ids){
+
+ids.forEach(id=>{
+
+if(imageQueue.length < maxImages){
 
 imageQueue.push(id);
 
 }
 
 });
+
+}
 
 }
 
