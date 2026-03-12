@@ -60,14 +60,12 @@ color:#888;
 const sheetURL="https://docs.google.com/spreadsheets/d/1kKb3MwSUXLsfu2mLKFcygGS27wKMksAMASERRe4ebaE/gviz/tq?tqx=out:json&gid=1632722066";
 
 const params=new URLSearchParams(window.location.search);
-
 const train=params.get("train");
 
 document.getElementById("info").innerHTML="Train Set: "+train;
 
 let imageQueue=[];
 let loading=false;
-
 let maxImages=40;
 
 
@@ -76,8 +74,12 @@ function extractDriveIDs(text){
 
 let ids=[];
 
+/* pattern open?id=FILEID */
+
 let match1=text.match(/id=([a-zA-Z0-9_-]+)/);
 if(match1) ids.push(match1[1]);
+
+/* pattern file/d/FILEID */
 
 let match2=text.match(/\/d\/([a-zA-Z0-9_-]+)/);
 if(match2) ids.push(match2[1]);
@@ -99,6 +101,8 @@ let batch=imageQueue.splice(0,4);
 batch.forEach(id=>{
 
 let frame=document.createElement("iframe");
+
+/* GOOGLE DRIVE PREVIEW LINK */
 
 frame.src="https://drive.google.com/file/d/"+id+"/preview";
 
@@ -166,8 +170,6 @@ imageQueue.push(id);
 
 });
 
-
-
 }
 
 }
@@ -177,12 +179,8 @@ imageQueue.push(id);
 }
 
 });
-
-
 
 processQueue();
-
-
 
 });
 
