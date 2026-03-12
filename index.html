@@ -246,7 +246,37 @@ return t;
 
 }
 
+function formatDisplayTime(t){
 
+if(!t) return "";
+
+t=String(t);
+
+if(t.startsWith("Date(")){
+
+let p=t.replace("Date(","").replace(")","").split(",");
+
+let h=parseInt(p[3]);
+let m=parseInt(p[4]);
+
+let ampm="AM";
+
+if(h>=12){
+ampm="PM";
+if(h>12) h-=12;
+}
+
+if(h==0) h=12;
+
+m=String(m).padStart(2,"0");
+
+return h+":"+m+" "+ampm;
+
+}
+
+return t;
+
+}
 
 function extractDriveIDs(text){
 
@@ -396,7 +426,8 @@ dateSpan.innerText=date;
 
 depotSpan.innerText=row.c[6]?.v || "";
 
-startTime.innerText=row.c[3]?.v || "";
+/*startTime.innerText=row.c[3]?.v || "";*/
+  startTime.innerText=formatDisplayTime(row.c[3]?.v);
 
 supervisor.innerText=row.c[8]?.v || "";
 
