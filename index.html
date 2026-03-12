@@ -24,37 +24,16 @@ margin-bottom:20px;
 
 .gallery{
 display:grid;
-grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
 gap:15px;
 }
 
-.gallery img{
+.gallery iframe{
 width:100%;
+height:220px;
+border:none;
 border-radius:8px;
 box-shadow:0 3px 8px rgba(0,0,0,0.2);
-cursor:pointer;
-transition:0.3s;
-}
-
-.gallery img:hover{
-transform:scale(1.05);
-}
-
-.lightbox{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.9);
-justify-content:center;
-align-items:center;
-}
-
-.lightbox img{
-max-width:90%;
-max-height:90%;
 }
 
 .loader{
@@ -76,23 +55,18 @@ color:#888;
 
 <div class="loader" id="loader">Loading images...</div>
 
-<div class="lightbox" id="lightbox">
-<img id="lightbox-img">
-</div>
-
 <script>
 
 const sheetURL="https://docs.google.com/spreadsheets/d/1kKb3MwSUXLsfu2mLKFcygGS27wKMksAMASERRe4ebaE/gviz/tq?tqx=out:json&gid=1632722066";
 
 const params=new URLSearchParams(window.location.search);
-
 const train=params.get("train");
 
 document.getElementById("info").innerHTML="Train Set: "+train;
 
 let imageQueue=[];
 let loading=false;
-let maxImages=30;
+let maxImages=40;
 
 function processQueue(){
 
@@ -100,24 +74,22 @@ if(loading) return;
 
 loading=true;
 
-let batch=imageQueue.splice(0,5);
+let batch=imageQueue.splice(0,4);
 
 batch.forEach(id=>{
 
-let img=document.createElement("img");
+let frame=document.createElement("iframe");
 
-img.loading="lazy";
+frame.src="https://drive.google.com/file/d/"+id+"/preview";
 
-img.src="https://drive.google.com/uc?id="+id;
-
-document.getElementById("gallery").appendChild(img);
+document.getElementById("gallery").appendChild(frame);
 
 });
 
 loading=false;
 
 if(imageQueue.length>0){
-setTimeout(processQueue,400);
+setTimeout(processQueue,500);
 }else{
 document.getElementById("loader").style.display="none";
 }
@@ -152,7 +124,7 @@ if(ids){
 
 ids.forEach(id=>{
 
-if(imageQueue.length<maxImages){
+if(imageQueue.length < maxImages){
 imageQueue.push(id);
 }
 
@@ -173,26 +145,6 @@ imageQueue.push(id);
 processQueue();
 
 });
-
-const lightbox=document.getElementById("lightbox");
-const lightboxImg=document.getElementById("lightbox-img");
-
-document.addEventListener("click",function(e){
-
-if(e.target.tagName==="IMG"){
-
-lightbox.style.display="flex";
-lightboxImg.src=e.target.src;
-
-}
-
-});
-
-lightbox.onclick=function(){
-
-lightbox.style.display="none";
-
-};
 
 </script>
 
