@@ -146,51 +146,51 @@ function normalizeTime(t){
 
 if(!t) return "";
 
-t=decodeURIComponent(String(t)).trim();
+t = decodeURIComponent(String(t)).trim();
 
-/* GOOGLE SHEET DATE() FORMAT */
+/* GOOGLE SHEET Date(1899...) */
 
 if(t.startsWith("Date(")){
 
 let p=t.replace("Date(","").replace(")","").split(",");
 
-let h=Number(p[3]);
-let m=Number(p[4]);
+let h=parseInt(p[3]);
+let m=parseInt(p[4]);
 
-return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+return h+":"+m;
 
 }
 
 
-/* 12:45:00 PM FORMAT */
+/* 12:45:00 PM */
 
-if(t.includes("AM")||t.includes("PM")){
+if(t.includes("AM") || t.includes("PM")){
 
 let parts=t.split(" ");
 
 let hm=parts[0].split(":");
 
-let h=Number(hm[0]);
-let m=Number(hm[1]);
+let h=parseInt(hm[0]);
+let m=parseInt(hm[1]);
 
 if(parts[1]=="PM" && h<12) h+=12;
 if(parts[1]=="AM" && h==12) h=0;
 
-return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+return h+":"+m;
 
 }
 
 
-/* 12:45 FORMAT */
+/* 12:45:00 */
 
 if(t.includes(":")){
 
 let hm=t.split(":");
 
-let h=Number(hm[0]);
-let m=Number(hm[1]);
+let h=parseInt(hm[0]);
+let m=parseInt(hm[1]);
 
-return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+return h+":"+m;
 
 }
 
