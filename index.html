@@ -13,16 +13,8 @@ background:#f4f6f9;
 padding:30px;
 }
 
-h1{
-margin-bottom:5px;
-}
-
 .section{
 margin-top:30px;
-}
-
-.section h2{
-margin-bottom:15px;
 }
 
 .gallery{
@@ -101,6 +93,26 @@ const date=params.get("date");
 document.getElementById("info").innerHTML=
 "Train Set: "+train+" | Date: "+date;
 
+
+function normalizeDate(d){
+
+let parts=d.split("/");
+
+if(parts.length===3){
+
+let m=parts[0].padStart(2,"0");
+let day=parts[1].padStart(2,"0");
+let y=parts[2];
+
+return y+"-"+m+"-"+day;
+
+}
+
+return d;
+
+}
+
+
 function addImages(container,cell){
 
 if(!cell) return;
@@ -127,6 +139,7 @@ document.getElementById(container).appendChild(img);
 
 }
 
+
 fetch(sheetURL)
 .then(res=>res.text())
 .then(data=>{
@@ -137,17 +150,20 @@ rows.forEach(row=>{
 
 let cols=row.split(",");
 
-if(row.includes(train) && row.includes(date)){
+let sheetDate=normalizeDate(cols[2]);
 
-addImages("before",cols[3]);
-addImages("during",cols[4]);
-addImages("after",cols[5]);
+if(cols[7]==train && sheetDate==date){
+
+addImages("before",cols[10]);
+addImages("during",cols[11]);
+addImages("after",cols[12]);
 
 }
 
 });
 
 });
+
 
 const lightbox=document.getElementById("lightbox");
 const lightboxImg=document.getElementById("lightbox-img");
