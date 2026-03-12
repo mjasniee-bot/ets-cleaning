@@ -69,6 +69,53 @@ let loading=false;
 let maxImages=40;
 
 
+/* EXTRACT DRIVE FILE IDS */
+
+function extractDriveIDs(text){
+
+let ids=[];
+
+/* decode %20 */
+
+text=decodeURIComponent(text);
+
+/* split multiple links */
+
+let links=text.split(",");
+
+links.forEach(link=>{
+
+link=link.trim();
+
+/* open?id= format */
+
+if(link.includes("open?id=")){
+
+let id=link.split("open?id=")[1];
+
+ids.push(id);
+
+}
+
+/* /file/d/ format */
+
+if(link.includes("/file/d/")){
+
+let id=link.split("/file/d/")[1].split("/")[0];
+
+ids.push(id);
+
+}
+
+});
+
+return ids;
+
+}
+
+
+
+/* LOAD IMAGE QUEUE */
 
 function processQueue(){
 
@@ -104,6 +151,8 @@ document.getElementById("loader").style.display="none";
 
 
 
+/* LOAD GOOGLE SHEET */
+
 fetch(sheetURL)
 
 .then(res=>res.text())
@@ -134,13 +183,9 @@ let text=String(cell.v);
 
 if(text.includes("drive.google.com")){
 
-/* ambil semua FILEID dari text */
-
-let ids=text.match(/[-\w]{25,}/g);
+let ids=extractDriveIDs(text);
 
 
-
-if(ids){
 
 ids.forEach(id=>{
 
@@ -151,8 +196,6 @@ imageQueue.push(id);
 }
 
 });
-
-}
 
 }
 
