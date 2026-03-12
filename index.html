@@ -70,21 +70,19 @@ let maxImages=40;
 
 
 
-function extractDriveIDs(text){
+function extractID(url){
 
-let ids=[];
+let id=null;
 
-/* pattern open?id=FILEID */
+if(url.includes("open?id=")){
+id=url.split("open?id=")[1];
+}
 
-let match1=text.match(/id=([a-zA-Z0-9_-]+)/);
-if(match1) ids.push(match1[1]);
+if(url.includes("/file/d/")){
+id=url.split("/file/d/")[1].split("/")[0];
+}
 
-/* pattern file/d/FILEID */
-
-let match2=text.match(/\/d\/([a-zA-Z0-9_-]+)/);
-if(match2) ids.push(match2[1]);
-
-return ids;
+return id;
 
 }
 
@@ -101,8 +99,6 @@ let batch=imageQueue.splice(0,4);
 batch.forEach(id=>{
 
 let frame=document.createElement("iframe");
-
-/* GOOGLE DRIVE PREVIEW LINK */
 
 frame.src="https://drive.google.com/file/d/"+id+"/preview";
 
@@ -127,9 +123,7 @@ document.getElementById("loader").style.display="none";
 
 
 fetch(sheetURL)
-
 .then(res=>res.text())
-
 .then(data=>{
 
 let json=JSON.parse(data.substr(47).slice(0,-2));
@@ -156,13 +150,21 @@ let text=String(cell.v);
 
 if(text.includes("drive.google.com")){
 
-let ids=extractDriveIDs(text);
+/* split multiple links */
+
+let links=text.split(",");
 
 
 
-ids.forEach(id=>{
+links.forEach(link=>{
 
-if(imageQueue.length < maxImages){
+link=link.trim();
+
+let id=extractID(link);
+
+
+
+if(id && imageQueue.length<maxImages){
 
 imageQueue.push(id);
 
