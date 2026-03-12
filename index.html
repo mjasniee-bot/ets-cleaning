@@ -69,17 +69,13 @@ let loading=false;
 let maxImages=40;
 
 
-/* EXTRACT DRIVE FILE IDS */
+/* EXTRACT ID DARI open?id= */
 
 function extractDriveIDs(text){
 
 let ids=[];
 
-/* decode %20 */
-
 text=decodeURIComponent(text);
-
-/* split multiple links */
 
 let links=text.split(",");
 
@@ -90,13 +86,7 @@ link=link.trim();
 if(link.includes("open?id=")){
 
 let id=link.split("open?id=")[1];
-ids.push(id);
 
-}
-
-if(link.includes("/file/d/")){
-
-let id=link.split("/file/d/")[1].split("/")[0];
 ids.push(id);
 
 }
