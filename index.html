@@ -1,31 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta charset="UTF-8">
 <title>ETS Cleaning Inspection</title>
 
 <style>
-
 body{
 font-family:Arial;
 background:#f4f6f9;
 padding:30px;
 }
 
-h1{
-margin-bottom:10px;
-}
-
-.info{
-color:#555;
-margin-bottom:20px;
-}
-
 .gallery{
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
 gap:15px;
+margin-top:20px;
 }
 
 .gallery img{
@@ -33,28 +23,6 @@ width:100%;
 border-radius:8px;
 box-shadow:0 3px 8px rgba(0,0,0,0.2);
 cursor:pointer;
-transition:0.3s;
-}
-
-.gallery img:hover{
-transform:scale(1.05);
-}
-
-.lightbox{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.9);
-justify-content:center;
-align-items:center;
-}
-
-.lightbox img{
-max-width:90%;
-max-height:90%;
 }
 
 </style>
@@ -65,13 +33,9 @@ max-height:90%;
 
 <h1>ETS Cleaning Inspection Gallery</h1>
 
-<div class="info" id="info"></div>
+<div id="info"></div>
 
 <div class="gallery" id="gallery"></div>
-
-<div class="lightbox" id="lightbox">
-<img id="lightbox-img">
-</div>
 
 <script>
 
@@ -85,7 +49,6 @@ const date=params.get("date");
 document.getElementById("info").innerHTML=
 "Train Set: "+train+" | Date: "+date;
 
-
 function addImage(fileId){
 
 let img=document.createElement("img");
@@ -95,7 +58,6 @@ img.src="https://drive.google.com/uc?export=view&id="+fileId;
 document.getElementById("gallery").appendChild(img);
 
 }
-
 
 fetch(sheetURL)
 .then(res=>res.text())
@@ -110,14 +72,9 @@ rows.forEach(r=>{
 let sheetTrain=r.c[7]?.v;
 let sheetDate=r.c[2]?.f || r.c[2]?.v;
 
+console.log("TRAIN:",sheetTrain,"DATE:",sheetDate);
+
 if(sheetTrain==train){
-
-if(sheetDate){
-
-let d=new Date(sheetDate);
-let formatted=d.toISOString().split("T")[0];
-
-if(formatted==date){
 
 r.c.forEach(cell=>{
 
@@ -137,34 +94,9 @@ ids.forEach(id=>addImage(id));
 
 }
 
-}
-
-}
-
 });
 
 });
-
-
-const lightbox=document.getElementById("lightbox");
-const lightboxImg=document.getElementById("lightbox-img");
-
-document.addEventListener("click",function(e){
-
-if(e.target.tagName==="IMG"){
-
-lightbox.style.display="flex";
-lightboxImg.src=e.target.src;
-
-}
-
-});
-
-lightbox.onclick=function(){
-
-lightbox.style.display="none";
-
-};
 
 </script>
 
