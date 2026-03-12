@@ -13,11 +13,19 @@ background:#f4f6f9;
 padding:30px;
 }
 
+h1{
+margin-bottom:10px;
+}
+
+.info{
+color:#555;
+margin-bottom:20px;
+}
+
 .gallery{
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
 gap:15px;
-margin-top:20px;
 }
 
 .gallery img{
@@ -25,6 +33,11 @@ width:100%;
 border-radius:8px;
 box-shadow:0 3px 8px rgba(0,0,0,0.2);
 cursor:pointer;
+transition:0.3s;
+}
+
+.gallery img:hover{
+transform:scale(1.05);
 }
 
 .lightbox{
@@ -51,7 +64,8 @@ max-height:90%;
 <body>
 
 <h1>ETS Cleaning Inspection Gallery</h1>
-<div id="info"></div>
+
+<div class="info" id="info"></div>
 
 <div class="gallery" id="gallery"></div>
 
@@ -68,16 +82,20 @@ const params=new URLSearchParams(window.location.search);
 const train=params.get("train");
 const date=params.get("date");
 
-document.getElementById("info").innerHTML="Train Set: "+train+" | Date: "+date;
+document.getElementById("info").innerHTML=
+"Train Set: "+train+" | Date: "+date;
 
-function addImage(id){
+
+function addImage(fileId){
 
 let img=document.createElement("img");
-img.src="https://drive.google.com/uc?export=view&id="+id;
+
+img.src="https://drive.google.com/uc?export=view&id="+fileId;
 
 document.getElementById("gallery").appendChild(img);
 
 }
+
 
 fetch(sheetURL)
 .then(res=>res.text())
@@ -92,7 +110,14 @@ rows.forEach(r=>{
 let sheetTrain=r.c[7]?.v;
 let sheetDate=r.c[2]?.f || r.c[2]?.v;
 
-if(sheetTrain==train && sheetDate.includes(date)){
+if(sheetTrain==train){
+
+if(sheetDate){
+
+let d=new Date(sheetDate);
+let formatted=d.toISOString().split("T")[0];
+
+if(formatted==date){
 
 r.c.forEach(cell=>{
 
@@ -112,9 +137,14 @@ ids.forEach(id=>addImage(id));
 
 }
 
+}
+
+}
+
 });
 
 });
+
 
 const lightbox=document.getElementById("lightbox");
 const lightboxImg=document.getElementById("lightbox-img");
