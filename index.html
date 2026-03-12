@@ -46,13 +46,8 @@ margin-bottom:30px;
 
 .report-grid{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
 gap:10px;
-}
-
-.section{
-display:none;
-margin-top:40px;
 }
 
 .gallery{
@@ -70,6 +65,18 @@ cursor:pointer;
 box-shadow:0 3px 10px rgba(0,0,0,0.2);
 }
 
+.badge{
+padding:5px 10px;
+border-radius:6px;
+color:white;
+font-weight:bold;
+font-size:13px;
+}
+
+.badge.normal{background:#3498db;}
+.badge.spot{background:#f39c12;}
+.badge.deep{background:#e74c3c;}
+
 #viewer{
 position:fixed;
 top:0;
@@ -80,7 +87,6 @@ background:rgba(0,0,0,0.9);
 display:none;
 align-items:center;
 justify-content:center;
-z-index:999;
 }
 
 #viewer img{
@@ -89,7 +95,6 @@ max-height:90%;
 }
 
 </style>
-
 </head>
 
 <body>
@@ -104,54 +109,42 @@ Train Set
 Tarikh
 <input type="date" id="dateSelect">
 
+Jenis
+<select id="typeSelect"></select>
+
+Masa Mula
+<select id="timeSelect"></select>
+
 <button onclick="loadReport()">Load Report</button>
 
-<button onclick="exportPDF()">Export PDF</button>
-
 </div>
-
 
 <div class="report" id="report">
 
 <div class="report-grid">
 
 <div><b>Train Set:</b> <span id="train"></span></div>
-<div><b>Tarikh Cucian:</b> <span id="date"></span></div>
+<div><b>Tarikh:</b> <span id="date"></span></div>
 <div><b>Depoh:</b> <span id="depot"></span></div>
-<div><b>Jenis Pembersihan:</b> <span id="cleaningType"></span></div>
+<div><b>Jenis:</b> <span id="cleaningType" class="badge"></span></div>
+<div><b>Masa Mula:</b> <span id="startTime"></span></div>
 <div><b>Penyelia:</b> <span id="supervisor"></span></div>
-<div><b>Kru:</b> <span id="crew"></span></div>
 
-<!--
-  <div><b>Train Set:</b> <span id="train"></span></div>
-<div><b>Tarikh Cucian:</b> <span id="date"></span></div>
-<div><b>Depoh:</b> <span id="depot"></span></div>
-<div><b>Jenis Pembersihan:</b> <span id="cleaningType"></span></div>
-<div><b>Penyelia:</b> <span id="supervisor"></span></div>
-<div><b>Kru:</b> <span id="crew"></span></div>
-  -->
 </div>
 
 </div>
 
-
-<div class="section" id="beforeSection">
-<h2>📷 Sebelum Cucian</h2>
+<h2>Sebelum Cucian</h2>
 <div class="gallery" id="before"></div>
-</div>
 
-<div class="section" id="duringSection">
-<h2>🧼 Semasa Cucian</h2>
+<h2>Semasa Cucian</h2>
 <div class="gallery" id="during"></div>
-</div>
 
-<div class="section" id="afterSection">
-<h2>✨ Selepas Cucian</h2>
+<h2>Selepas Cucian</h2>
 <div class="gallery" id="after"></div>
-</div>
 
 
-<div id="viewer" onclick="closeViewer()">
+<div id="viewer" onclick="this.style.display='none'">
 <img id="viewerImg">
 </div>
 
@@ -161,28 +154,6 @@ Tarikh
 const sheetURL="https://docs.google.com/spreadsheets/d/1kKb3MwSUXLsfu2mLKFcygGS27wKMksAMASERRe4ebaE/gviz/tq?tqx=out:json&gid=1632722066";
 
 let rowsData=[];
-
-
-
-/* GET URL PARAMETERS */
-
-const params = new URLSearchParams(window.location.search);
-const paramTrain = params.get("train");
-const paramDate = params.get("date");
-
-
-
-function formatDate(dateStr){
-
-let d=new Date(dateStr);
-
-let day=String(d.getDate()).padStart(2,"0");
-let month=String(d.getMonth()+1).padStart(2,"0");
-let year=d.getFullYear();
-
-return `${day}/${month}/${year}`;
-
-}
 
 
 
@@ -251,7 +222,10 @@ let img=document.createElement("img");
 img.src="https://lh3.googleusercontent.com/d/"+id+"=w1200";
 
 img.onclick=function(){
-openViewer(this.src);
+
+document.getElementById("viewerImg").src=this.src;
+document.getElementById("viewer").style.display="flex";
+
 }
 
 container.appendChild(img);
@@ -262,57 +236,61 @@ container.appendChild(img);
 
 
 
-function openViewer(src){
+function populateFilters(){
 
-document.getElementById("viewerImg").src=src;
-document.getElementById("viewer").style.display="flex";
+let trainSet=[...new Set(rowsData.map(r=>r.c[7]?.v))].filter(Boolean).sort((a,b)=>a-b);
 
-}
+let typeSet=[...new Set(rowsData.map(r=>r.c[5]?.v))].filter(Boolean);
 
-function closeViewer(){
-
-document.getElementById("viewer").style.display="none";
-
-}
+let timeSet=[...new Set(rowsData.map(r=>r.c[3]?.v))].filter(Boolean);
 
 
+trainSet.forEach(t=>{
+let o=document.createElement("option");
+o.value=t;
+o.text=t;
+trainSelect.appendChild(o);
+});
 
-function populateTrainFilter(){
 
-let trains=[...new Set(rowsData.map(r=>r.c[7]?.v))]
-.filter(Boolean)
-.sort((a,b)=>a-b);
+typeSet.forEach(t=>{
+let o=document.createElement("option");
+o.value=t;
+o.text=t;
+typeSelect.appendChild(o);
+});
 
-let trainSelect=document.getElementById("trainSelect");
 
-trains.forEach(t=>{
-
-let opt=document.createElement("option");
-opt.value=t;
-opt.text=t;
-
-trainSelect.appendChild(opt);
-
+timeSet.forEach(t=>{
+let o=document.createElement("option");
+o.value=t;
+o.text=t;
+timeSelect.appendChild(o);
 });
 
 }
 
 
 
-/* LOAD REPORT */
-
 function loadReport(){
 
-let train=document.getElementById("trainSelect").value;
-let date=document.getElementById("dateSelect").value;
+let train=trainSelect.value;
+let date=dateSelect.value;
+let type=typeSelect.value;
+let time=timeSelect.value;
+
 
 let row=rowsData.find(r=>{
 
 let sheetDate=parseSheetDate(r.c[2]?.v);
 
-return r.c[7]?.v==train && sheetDate==date;
+return r.c[7]?.v==train &&
+sheetDate==date &&
+r.c[5]?.v==type &&
+r.c[3]?.v==time;
 
 });
+
 
 if(!row){
 
@@ -321,45 +299,37 @@ return;
 
 }
 
-document.getElementById("report").style.display="block";
-document.getElementById("beforeSection").style.display="block";
-document.getElementById("duringSection").style.display="block";
-document.getElementById("afterSection").style.display="block";
+
+report.style.display="block";
 
 
-document.getElementById("train").innerText=train;
-document.getElementById("date").innerText=formatDate(date);
-document.getElementById("depot").innerText=row.c[6]?.v || "";
-document.getElementById("cleaningType").innerText=row.c[5]?.v || "";
-document.getElementById("supervisor").innerText=row.c[8]?.v || "";
-document.getElementById("crew").innerText=row.c[9]?.v || "";
+trainSpan.innerText=train;
+dateSpan.innerText=date;
+depotSpan.innerText=row.c[6]?.v || "";
+startTime.innerText=row.c[3]?.v || "";
+supervisor.innerText=row.c[8]?.v || "";
 
 
-let before=row.c[10]?.v;
-let during=row.c[11]?.v;
-let after=row.c[12]?.v;
+let typeBadge=document.getElementById("cleaningType");
 
-if(before) renderImages(extractDriveIDs(before),beforeDiv);
-if(during) renderImages(extractDriveIDs(during),duringDiv);
-if(after) renderImages(extractDriveIDs(after),afterDiv);
+let typeText=row.c[5]?.v || "";
+
+typeBadge.innerText=typeText;
+
+typeBadge.className="badge";
+
+if(typeText.toLowerCase().includes("normal")) typeBadge.classList.add("normal");
+if(typeText.toLowerCase().includes("spot")) typeBadge.classList.add("spot");
+if(typeText.toLowerCase().includes("deep")) typeBadge.classList.add("deep");
+
+
+renderImages(extractDriveIDs(row.c[10]?.v || ""),before);
+renderImages(extractDriveIDs(row.c[11]?.v || ""),during);
+renderImages(extractDriveIDs(row.c[12]?.v || ""),after);
 
 }
 
 
-
-const beforeDiv=document.getElementById("before");
-const duringDiv=document.getElementById("during");
-const afterDiv=document.getElementById("after");
-
-
-
-function exportPDF(){
-window.print();
-}
-
-
-
-/* LOAD GOOGLE SHEET */
 
 fetch(sheetURL)
 .then(res=>res.text())
@@ -369,21 +339,10 @@ let json=JSON.parse(data.substr(47).slice(0,-2));
 
 rowsData=json.table.rows;
 
-populateTrainFilter();
-
-
-/* AUTO LOAD FROM LOOKER STUDIO */
-
-if(paramTrain && paramDate){
-
-document.getElementById("trainSelect").value=paramTrain;
-document.getElementById("dateSelect").value=paramDate;
-
-loadReport();
-
-}
+populateFilters();
 
 });
+
 
 </script>
 
