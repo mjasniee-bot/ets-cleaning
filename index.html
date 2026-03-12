@@ -28,10 +28,10 @@ grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
 gap:15px;
 }
 
-.gallery iframe{
+.gallery img{
 width:100%;
 height:220px;
-border:none;
+object-fit:cover;
 border-radius:8px;
 box-shadow:0 3px 8px rgba(0,0,0,0.2);
 }
@@ -87,22 +87,16 @@ links.forEach(link=>{
 
 link=link.trim();
 
-/* open?id= format */
-
 if(link.includes("open?id=")){
 
 let id=link.split("open?id=")[1];
-
 ids.push(id);
 
 }
 
-/* /file/d/ format */
-
 if(link.includes("/file/d/")){
 
 let id=link.split("/file/d/")[1].split("/")[0];
-
 ids.push(id);
 
 }
@@ -127,11 +121,13 @@ let batch=imageQueue.splice(0,4);
 
 batch.forEach(id=>{
 
-let frame=document.createElement("iframe");
+let img=document.createElement("img");
 
-frame.src="https://drive.google.com/file/d/"+id+"/preview";
+img.loading="lazy";
 
-document.getElementById("gallery").appendChild(frame);
+img.src="https://drive.google.com/uc?export=view&id="+id;
+
+document.getElementById("gallery").appendChild(img);
 
 });
 
@@ -163,13 +159,9 @@ let json=JSON.parse(data.substr(47).slice(0,-2));
 
 let rows=json.table.rows;
 
-
-
 rows.forEach(r=>{
 
 let sheetTrain=r.c[7]?.v;
-
-
 
 if(sheetTrain==train){
 
@@ -179,13 +171,9 @@ if(cell && cell.v){
 
 let text=String(cell.v);
 
-
-
 if(text.includes("drive.google.com")){
 
 let ids=extractDriveIDs(text);
-
-
 
 ids.forEach(id=>{
 
