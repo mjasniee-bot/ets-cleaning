@@ -72,6 +72,7 @@ document.getElementById("info").innerHTML="Train Set: "+train;
 function addImage(id){
 
 let img=document.createElement("img");
+
 img.src="https://drive.google.com/uc?export=view&id="+id;
 
 document.getElementById("gallery").appendChild(img);
@@ -94,12 +95,20 @@ if(sheetTrain==train){
 
 r.c.forEach(cell=>{
 
-if(cell && cell.v && cell.v.includes("drive.google.com")){
+if(cell && cell.v){
 
-let ids=cell.v.match(/[-\w]{25,}/g);
+let text=String(cell.v);
+
+if(text.includes("drive.google.com")){
+
+let ids=text.match(/[-\w]{25,}/g);
 
 if(ids){
+
 ids.forEach(id=>addImage(id));
+
+}
+
 }
 
 }
@@ -111,6 +120,7 @@ ids.forEach(id=>addImage(id));
 });
 
 });
+
 
 const lightbox=document.getElementById("lightbox");
 const lightboxImg=document.getElementById("lightbox-img");
